@@ -12,12 +12,41 @@ int  setup_buff(char *, char *, int);
 
 //prototypes for functions to handle required functionality
 int  count_words(char *, int, int);
+char* reverseString(char*, int, int);
+void wordPrint(char*, int, int);
 //add additional prototypes here
 
 
 int setup_buff(char *buff, char *user_str, int len){
-    //TODO: #4:  Implement the setup buff as per the directions
-    return 0; //for now just so the code compiles. 
+    int stringLength = 0;
+    int whitespaceCounter = 0;
+    
+    while(*user_str != '\0') {
+        if (stringLength >= len - 1) {
+            return -1;
+        }
+
+        if (*user_str == '\t' || *user_str == ' ') {
+            if (!whitespaceCounter && stringLength > 0) {
+                *(buff + stringLength) = ' ';
+                stringLength++;
+                whitespaceCounter = 1;
+            }
+        } else {
+            *(buff + stringLength) = *user_str;
+            stringLength++;
+            whitespaceCounter = 0;
+        }
+        user_str++;
+    }
+
+    for (int i = stringLength; i < len - 1; i++) {
+        *(buff + i) = '.';
+    }
+
+    *(buff + len - 1) = '\0';
+
+    return stringLength; 
 }
 
 void print_buff(char *buff, int len){
@@ -34,11 +63,66 @@ void usage(char *exename){
 }
 
 int count_words(char *buff, int len, int str_len){
-    //YOU MUST IMPLEMENT
-    return 0;
+    int wordCounter = 0;
+    int whitespaceFlag = 1;
+    for (int i = 0; i < str_len; i++) {
+        char currentBuffChar = *(buff + (sizeof(char)*i));
+        if (currentBuffChar != '.' && currentBuffChar != ' ' && currentBuffChar != '\t') {
+            if (whitespaceFlag) { // we have not yet encountered a whitespace
+                wordCounter++;
+                whitespaceFlag = 0;
+            } 
+        } else { // we encountered a whitespace because if statement evaluated to false
+            whitespaceFlag = 1;
+        }
+    }
+    return wordCounter;
 }
 
-//ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
+char* reverseString(char *buff, int len, int str_len) {
+    char *start = buff;
+    char *end = buff + str_len - 1;
+    char temp;
+
+    while (start < end) {
+        temp = *start;
+        *start = *end;
+        *end = temp;
+
+        start++;
+        end--;
+    }
+    return buff;
+}
+
+void wordPrint(char* buff, int len, int str_len) {
+    printf("Word Print\n");
+    printf("----------\n");
+
+    int wordIndex = 0;
+    int i = 0;
+
+    while (i < str_len) {
+        if (*(buff + i) == ' ' || *(buff + i) == '\t') {
+            i++;
+            continue;
+        }
+
+        int start = i;
+        while (i < str_len && *(buff + i) != ' ' && *(buff + i) != '\t') {
+            i++;
+        }
+
+        int wordLength = i - start;
+        printf("%d. ", ++wordIndex);
+
+        for (int j = start; j < i; j++) {
+            printf("%c", *(buff + j));
+        }
+
+        printf(" (%d)\n", wordLength);
+    }
+}
 
 int main(int argc, char *argv[]){
 
@@ -56,7 +140,7 @@ int main(int argc, char *argv[]){
     }
 
     opt = (char)*(argv[1]+1);   //get the option flag
-
+ 
     //handle the help flag and then exit normally
     if (opt == 'h'){
         usage(argv[0]);
@@ -74,11 +158,11 @@ int main(int argc, char *argv[]){
 
     input_string = argv[2]; //capture the user input string
 
-    //TODO:  #3 Allocate space for the buffer using malloc and
-    //          handle error if malloc fails by exiting with a 
-    //          return code of 99
-    // CODE GOES HERE FOR #3
+    buff = malloc(BUFFER_SZ * sizeof(char));
 
+    if (buff == NULL) {
+        exit(99);
+    }
 
     user_str_len = setup_buff(buff, input_string, BUFFER_SZ);     //see todos
     if (user_str_len < 0){
@@ -95,16 +179,26 @@ int main(int argc, char *argv[]){
             }
             printf("Word Count: %d\n", rc);
             break;
-
-        //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
-        //       the case statement options
+        case 'r':
+            reverseString(buff, BUFFER_SZ, user_str_len);
+            printf("Reversed String: ");
+            int bufferIndex = 0;
+            while (bufferIndex < user_str_len) {
+                printf("%c", *(buff + (sizeof(char) * bufferIndex)));
+                bufferIndex++;
+            }
+            printf("\n");
+            break;
+        case 'w':
+            wordPrint(buff, BUFFER_SZ, user_str_len);
+            break;
         default:
             usage(argv[0]);
             exit(1);
     }
 
-    //TODO:  #6 Dont forget to free your buffer before exiting
     print_buff(buff,BUFFER_SZ);
+    free(buff);
     exit(0);
 }
 
