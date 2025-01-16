@@ -14,8 +14,6 @@ int  setup_buff(char *, char *, int);
 int  count_words(char *, int, int);
 char* reverseString(char*, int, int);
 void wordPrint(char*, int, int);
-//add additional prototypes here
-
 
 int setup_buff(char *buff, char *user_str, int len){
     int stringLength = 0;
@@ -133,7 +131,11 @@ int main(int argc, char *argv[]){
     int  user_str_len;      //length of user supplied string
 
     //TODO:  #1. WHY IS THIS SAFE, aka what if arv[1] does not exist?
-    //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    /*
+    This is safe because we check to make sure that there are the correct amount of arguments.
+    The first condition of the if statement checks that there are at least two arguments, this means that
+    we can check arv[1] without worrying about erroring out. 
+    */
     if ((argc < 2) || (*argv[1] != '-')){
         usage(argv[0]);
         exit(1);
@@ -150,7 +152,11 @@ int main(int argc, char *argv[]){
     //WE NOW WILL HANDLE THE REQUIRED OPERATIONS
 
     //TODO:  #2 Document the purpose of the if statement below
-    //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    /*
+    The purpose of this if statement is to make sure we have the appropriate amount of arguments.
+    Without this if statement, if the user only eneters the flag without the string they want to process
+    then arv[2] wont exist and the program could error out.
+    */
     if (argc < 3){
         usage(argv[0]);
         exit(1);
@@ -164,7 +170,7 @@ int main(int argc, char *argv[]){
         exit(99);
     }
 
-    user_str_len = setup_buff(buff, input_string, BUFFER_SZ);     //see todos
+    user_str_len = setup_buff(buff, input_string, BUFFER_SZ);    
     if (user_str_len < 0){
         printf("Error setting up buffer, error = %d", user_str_len);
         exit(2);
@@ -172,7 +178,7 @@ int main(int argc, char *argv[]){
 
     switch (opt){
         case 'c':
-            rc = count_words(buff, BUFFER_SZ, user_str_len);  //you need to implement
+            rc = count_words(buff, BUFFER_SZ, user_str_len);
             if (rc < 0){
                 printf("Error counting words, rc = %d", rc);
                 exit(2);
@@ -192,6 +198,13 @@ int main(int argc, char *argv[]){
         case 'w':
             wordPrint(buff, BUFFER_SZ, user_str_len);
             break;
+        case 'x':
+            if (argc != 5) {
+                usage(argv[0]);
+                exit(1);
+            }
+            printf("Not Implemented!\n");
+            break;
         default:
             usage(argv[0]);
             exit(1);
@@ -208,4 +221,8 @@ int main(int argc, char *argv[]){
 //          is a good practice, after all we know from main() that 
 //          the buff variable will have exactly 50 bytes?
 //  
-//          PLACE YOUR ANSWER HERE
+//          Providing both the pointer and the length is good practice because
+//          it improves both the flexibility and the safety of the program as a whole.
+//          It improves the flexibility because it allows the functions to handle different
+//          buffer sizes rather than assuming the given fixed length. It improves safety because
+//          it prevents buffer overflows.
