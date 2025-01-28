@@ -88,8 +88,54 @@ int get_student(int fd, int id, student_t *s){
  *            
  */
 int add_student(int fd, int id, char *fname, char *lname, int gpa){
-    printf(M_NOT_IMPL);
-    return NOT_IMPLEMENTED_YET;
+    off_t offset = (off_t)(id * STUDENT_RECORD_SIZE);
+    
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        printf(M_ERR_DB_READ);
+        return ERR_DB_FILE;
+    }
+
+    student_t tmp;
+
+    ssize_t bytesRead = read(fd, &tmp, STUDENT_RECORD_SIZE);
+    
+    if (bytesRead == -1) {
+        printf(M_ERR_DB_READ);
+        return ERR_DB_FILE;
+    }
+
+    if (bytesRead == STUDENT_RECORD_SIZE) {
+        if (memcmp(&tmp, &EMPTY_STUDENT_RECORD, STUDENT_RECORD_SIZE) != 0) {
+            printf(M_ERR_DB_ADD_DUP, id);
+            return ERR_DB_OP;
+        }
+    } else if (bytesRead > 0 && bytesRead < STUDENT_RECORD_SIZE) {
+        printf(M_ERR_DB_ADD_DUP, id);
+        return ERR_DB_OP;
+    }
+
+    student_t studentToAdd;
+    
+    memset(&studentToAdd, 0, sizeof(student_t));
+    studentToAdd.id = id;
+    strncpy(studentToAdd.fname, fname, sizeof(studentToAdd.fname) - 1);
+    strncpy(studentToAdd.lname, lname, sizeof(studentToAdd.lname) - 1);
+    studentToAdd.gpa = gpa;
+
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        printf(M_ERR_DB_READ);
+        return ERR_DB_FILE;
+    }
+
+    ssize_t bytesWritten = write(fd, &studentToAdd, STUDENT_RECORD_SIZE);
+    if (bytesWritten < 0 || bytesWritten < STUDENT_RECORD_SIZE) {
+        printf(M_ERR_DB_WRITE);
+        return ERR_DB_FILE;
+    }
+
+
+    printf(M_STD_ADDED);
+    return NO_ERROR;
 }
 
 /*
