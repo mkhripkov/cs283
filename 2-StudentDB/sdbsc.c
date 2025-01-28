@@ -61,7 +61,7 @@ int open_db(char *dbFile, bool should_truncate){
 int get_student(int fd, int id, student_t *s){
     return NOT_IMPLEMENTED_YET;
 }
-
+ 
 /*
  *  add_student
  *      fd:     linux file descriptor
