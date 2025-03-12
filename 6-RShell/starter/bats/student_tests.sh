@@ -6,7 +6,79 @@
 
 ### Local Mode Tests
 
-@test "Local: 'dragon' built-in command prints ASCII art (at least doesn't fail)" {
+@test "Local: check ls runs without errors" {
+    run ./dsh <<EOF
+ls
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline echo hello | cat" {
+    run ./dsh <<EOF
+echo hello | cat
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "hello" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline echo hello world | tr a-z A-Z" {
+    run ./dsh <<EOF
+echo hello world | tr a-z A-Z
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "HELLO WORLD" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline echo 'c b a' | tr \" \" \"\\n\" | sort" {
+    run ./dsh <<EOF
+echo "c b a" | tr " " "\n" | sort
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "a" ]]
+    [[ "$output" =~ "b" ]]
+    [[ "$output" =~ "c" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline extra whitespace between pipes" {
+    run ./dsh <<EOF
+echo hello |    | tr a-z A-Z
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "HELLO" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline error in middle command" {
+    run ./dsh <<EOF
+echo hello | nonexistcmd | tr a-z A-Z
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "execvp" ]] || [[ "$output" =~ "not found" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+@test "Local: Pipeline word count using wc" {
+    run ./dsh <<EOF
+echo hello world | wc -w
+exit
+EOF
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ "2" ]]
+    [[ "$output" =~ "dsh4>" ]]
+}
+
+
+@test "Local: 'dragon' built-in command prints ASCII art" {
   run ./dsh <<EOF
 dragon
 exit
@@ -115,3 +187,32 @@ EOF
   cleanup_server
 }
 
+@test "Remote: multiple commands in one session" {
+  setup_server
+
+  run ./dsh -c -p "$TEST_PORT" <<EOF
+pwd
+ls
+echo "done testing multiple commands"
+exit
+EOF
+
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "done testing multiple commands" ]]
+
+  cleanup_server
+}
+
+@test "Remote: run a 3-command pipeline (grep -> cut -> tr) via client-server" {
+  setup_server
+
+  run ./dsh -c -p "$TEST_PORT" <<EOF
+echo "color:red:blue:green" | grep color | cut -d : -f3 | tr a-z A-Z
+exit
+EOF
+
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "BLUE" ]]
+
+  cleanup_server
+}
